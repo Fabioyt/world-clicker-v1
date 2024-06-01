@@ -1,36 +1,48 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component,  EventEmitter,  Input,  OnInit, Output } from '@angular/core';
 import * as L from 'leaflet';
 import { map } from 'rxjs';
+import {MatSnackBar, MatSnackBarModule} from '@angular/material/snack-bar';
+
 @Component({
   selector: 'app-leaflat-map',
   standalone: true,
-  imports: [],
+  imports: [MatSnackBarModule],
   templateUrl: './leaflat-map.component.html',
   styleUrl: './leaflat-map.component.scss'
 })
 export class LeaflatMapComponent implements AfterViewInit{
+
+  @Output() public hideMap: EventEmitter<string> = new EventEmitter<string>();
+  @Input() public coins: number = 0;
+
   public lat 
   public lng
 
   
    iconHome = L.divIcon({
     className: 'custom-div-icon',
-    html: "<div style='background-color:#c30b82;' class='marker-pin'></div><img src='/assets/home.png'>",
+    html: "<div style='background-color:#c30b82;' class='marker-pin'></div><img src='https://fab-io.xyz/world-clicker/assets/home.png'>",
     iconSize: [86, 105],
     iconAnchor: [43,105]
   });
 
   iconCar = L.divIcon({
     className: 'custom-div-icon',
-    html: "<div style='background-color:#c30b82;' class='marker-pin'></div><img id='car' src='/assets/Car.png'>",
+    html: "<div style='background-color:#c30b82;' class='marker-pin'></div><img id='car' src='https://fab-io.xyz/world-clicker/assets/Car.png'>",
     iconSize: [91, 105],
     iconAnchor: [48,105]
   });
   manCar = L.divIcon({
     className: 'custom-div-icon',
-    html: "<div style='background-color:#c30b82;' class='marker-pin'></div><img src='/assets/Man.png'>",
+    html: "<div style='background-color:#c30b82;' class='marker-pin'></div><img src='https://fab-io.xyz/world-clicker/assets/Man.png'>",
     iconSize: [91, 105],
     iconAnchor: [48,105]
+  });
+  repairShop = L.divIcon({
+    className: 'custom-div-icon',
+    html: "<div style='background-color:#c30b82;' class='marker-pin'></div><img src='https://fab-io.xyz/world-clicker/assets/Repair.png'>",
+    iconSize: [88, 117],
+    iconAnchor: [44,117]
   });
 
   public map: L.map;
@@ -51,7 +63,7 @@ export class LeaflatMapComponent implements AfterViewInit{
     
     this.map = L.map('map', {
       center: [0,0],
-      zoom: 18
+      zoom: 18,
     });
     this.moveMap([49,12]);
   // } );
@@ -65,10 +77,10 @@ export class LeaflatMapComponent implements AfterViewInit{
       const lng = pos.coords.longitude;
       const accuracy = pos.coords.accuracy;
 
-    
+      // this.generateRandomCars();
 setTimeout(() => {
 
-   L.marker([49.3,10.5833333], {icon: this.iconCar}).addTo(this.map)
+   L.marker([49.3,10.5833333], {icon: this.repairShop}).addTo(this.map).on("click", this.onRepairShopClick)
   
   
 }, 5000);
@@ -88,29 +100,53 @@ this.currentPos = null;
   
  } );
 
- this.map.on('zoomend', () => {
-  var shelterMarkers = new L.FeatureGroup();
-  // shelterMarkers.addLayer(this.marker);
-  if (this.map.getZoom() <7){
-    this.map.removeLayer(shelterMarkers);
-    console.log("moin");
+//  this.map.on('zoomend', () => {
+//   var shelterMarkers = new L.FeatureGroup();
+//   // shelterMarkers.addLayer(this.marker);
+//   if (this.map.getZoom() <7){
+//     this.map.removeLayer(shelterMarkers);
+//     console.log("moin");
     
-}
-else {
-    this.map.addLayer(shelterMarkers);
-    console.log("moin2");
+// }
+// else {
+//     this.map.addLayer(shelterMarkers);
+//     console.log("moin2");
     
     
-}
+// }
 
- });
+//  });
     tiles.addTo(this.map);
     this.path();
-  }
+    this.generateRandomCars();
+    // this.map.removeControl(map.zoomControl);
 
-  constructor( ) { }
+  }
+  public onRepairShopClick() {
+    console.log("jetzt");
+    
+  };
+  constructor() { }
+  public hideMapNow() {
+     this.hideMap.emit("a");
+  }
+  // public onCarClick() {
+    
+    
+  //   console.log(this.z, this.visible);
+  //   this.visible = false;
+  //   this.z = 51515;
+  //   console.log(this.z, this.visible);
+    
+  //   // this.map.hide();
+  //   // this.map
+  // };
+
+  
+  
 
   ngAfterViewInit(): void {
+    
     navigator.geolocation.getCurrentPosition((a) => {this.lat = a.coords.latitude; this.lng = a.coords.longitude; console.log(this.lng, this.lat);
     
     });
@@ -161,17 +197,38 @@ else {
       
       // this.map.clearLayer(this.carLayer)
     }, 5000);
+    let neu = true;
+    console.log(this.generiertePositionen);
+    
+    this.generiertePositionen.forEach((e) => {
+      let dinstance = (this.getDistance([e[0], e[1]],[this.lat, this.lng]));
+      console.log("Distance:",dinstance, this.generiertePositionen);
+      
+      if(dinstance < 1600) {
+        neu = false
+      }
+
+    })
+    if(neu == true)  {
+        this.genNewCars();
+    }
+
+
 
   //  this.marker = L.marker([a.coords.latitude,a.coords.longitude]).addTo(this.map);
     this.allCities.forEach((e) => {
       
       let lat = e.latitude;
       let lng = e.longitude;
-           
+      
       let lngDiff = this.lng - lng;
       let latDiff = this.lat - lat;
 
-      if (lngDiff > -0.5 && lngDiff < 0.5) {
+      // console.log(e);
+      // console.log(this.lat, this.lng);
+      // console.log(latDiff, lngDiff);
+
+      if (lngDiff > -0.005 && lngDiff < 0.005) {
         console.log(e);
         console.log(this.lat, this.lng);
         console.log(latDiff, lngDiff);
@@ -184,6 +241,10 @@ else {
   };
   public currentPos;
   public carMarkers: L.marker;
+  // public coins: number =0;
+  public cars: number = +localStorage.getItem("carcount");
+  public gems: number =0;
+
   public moveMap(a:any[]) {
     
   // let circle= L.circle([lat,lng], {radius: accuracy}).addTo(this.map);
@@ -209,7 +270,8 @@ else {
       const lng = pos.coords.longitude;
       const accuracy = pos.coords.accuracy;
 
- 
+      this.lat = lat;
+      this.lng = lng;
 
     
     var latlngs = [
@@ -478,6 +540,80 @@ public getCountryName (countryCode) {
         return countryCode;
     }
 }
+public randomCars: any[] = [];
+public generiertePositionen: any[] = [];
+
+public generateRandomCars() {
+  console.log("generateRandomCarsStart",this.lat, this.lng);
+  navigator.geolocation.getCurrentPosition( (a)=> {
+    this.generiertePositionen.push([a.coords.latitude, a.coords.longitude])
+    for(let i = 0; i < 25; i++ ) {
+      let calcLat =a.coords.latitude + (Math.random() -0.5) / 100 
+      let calcLng =a.coords.longitude + (Math.random() -0.5) / 100
+      console.log(calcLat, calcLng);
+      let circle = L.circle([calcLat,calcLng], 50).addTo(this.map);
+      this.randomCars.push({
+        "Lat":calcLat, 
+        "Lng":calcLng})
+     let mark =  L.marker([calcLat,calcLng], {icon: this.iconCar}).addTo(this.map); 
+     mark.on("click", () => {
+      if(this.getDistance( [calcLat, calcLng], [this.lat,this.lng]) <= 50) {
+        console.log(calcLat, calcLng,this.getDistance( [calcLat, calcLng], [this.lat,this.lng]), this.lat, this.lng);
+      this.cars++;
+      localStorage.setItem("carcount", this.cars.toString())
+      this.hideMapNow();
+      this.map.removeLayer(mark);
+      this.map.removeLayer(circle);
+      }
+     })
+      
+      console.log(this.randomCars);
+      this.map.removeLayer(this.map)
+    }
+  }) 
+console.log("fertig Random");
+
+  
+  
+}
+
+public genNewCars() {
+  console.log("generateRandomCarsStart",this.lat, this.lng);
+  
+    this.generiertePositionen.push([this.lat, this.lng])
+    console.log("hier");
+    for(let u = 0; u < 25; u++ ) {
+      console.log("hier");
+      
+      let calcLat =this.lat+ (Math.random() -0.5) / 100 
+      let calcLng =this.lng + (Math.random() -0.5) / 100
+      console.log(calcLat, calcLng);
+      let circle2 = L.circle([calcLat,calcLng], 50).addTo(this.map);
+      this.randomCars.push({
+        "Lat":calcLat, 
+        "Lng":calcLng})
+     let mark2 =  L.marker([calcLat,calcLng], {icon: this.iconCar}).addTo(this.map); 
+     mark2.on("click", () => {
+      if(this.getDistance( [calcLat, calcLng], [this.lat,this.lng]) <= 50) {
+        console.log(calcLat, calcLng,this.getDistance( [calcLat, calcLng], [this.lat,this.lng]), this.lat, this.lng);
+      this.cars++;
+      localStorage.setItem("carcount", this.cars.toString())
+      this.hideMapNow();
+      this.map.removeLayer(mark2);
+      this.map.removeLayer(circle2);
+      }
+     })
+      
+      console.log(this.randomCars);
+      this.map.removeLayer(this.map)
+    }
+  
+console.log("fertig Random");
+
+  
+  
+}
+
 
   public async getAllCities() {
     // https://countriesnow.space/api/v0.1/countries/population/cities
@@ -516,8 +652,9 @@ public getCountryName (countryCode) {
             .then((result) => {
               setTimeout(() => {
               if(result.results) {
-                (L.marker([result.results[0].latitude,result.results[0].longitude], {icon: this.iconCar}).addTo(this.map));
+                (L.marker([result.results[0].latitude,result.results[0].longitude], {icon: this.repairShop}).addTo(this.map));
                 this.allCities.push(result.results[0])
+                L.circle([result.results[0].latitude,result.results[0].longitude], 550).addTo(this.map).setStyle({color: 'red'});
             }
           }, 1000);
             })
@@ -529,6 +666,41 @@ public getCountryName (countryCode) {
       }, 100);
       })
       .catch((error) => console.log(error));
-  }
 
+      
+  }
+  public toRadian(a) {
+    var pi = Math.PI;
+    // Multiply degrees by pi divided by 180 to convert to radians.
+    return a * (pi/180);
+  }
+  public getDistance(origin, destination) {
+    // return distance in meters
+    var lon1 = this.toRadian(origin[1]),
+        lat1 = this.toRadian(origin[0]),
+        lon2 = this.toRadian(destination[1]),
+        lat2 = this.toRadian(destination[0]);
+
+    var deltaLat = lat2 - lat1;
+    var deltaLon = lon2 - lon1;
+
+    var a = Math.pow(Math.sin(deltaLat/2), 2) + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(deltaLon/2), 2);
+    var c = 2 * Math.asin(Math.sqrt(a));
+    var EARTH_RADIUS = 6371;
+
+    console.log(c, EARTH_RADIUS);
+    
+    return c * EARTH_RADIUS * 1000;
+  }
+    public randomCar: any = {
+      car: "Car12",
+      hp: 1, 
+    };
+    public visible = true;
+    public z = 0;
+    public onCloseClick() {
+      this.visible = true;
+      console.log(this.visible);
+      
+    }
 }
